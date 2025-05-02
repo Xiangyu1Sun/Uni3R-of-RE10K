@@ -11,6 +11,7 @@ from jaxtyping import Float
 from torch import Tensor
 
 from ...geometry.projection import get_fov, homogenize_points
+from .sh_utils import eval_sh
 
 
 def get_projection_matrix(
@@ -86,6 +87,7 @@ def render_cuda(
     projection_matrix = rearrange(projection_matrix, "b i j -> b j i")
     view_matrix = rearrange(extrinsics.inverse(), "b i j -> b j i")
     full_projection = view_matrix @ projection_matrix
+    camera_center = extrinsics[:, :3, 3]
 
     all_images = []
     all_radii = []
@@ -117,11 +119,21 @@ def render_cuda(
 
         row, col = torch.triu_indices(3, 3)
 
+        if use_sh:
+            shs_view = shs[i].mT
+            dir_pp = (gaussian_means[i] - camera_center[i].unsqueeze(0))
+            dir_pp_normalized = dir_pp/dir_pp.norm(dim=1, keepdim=True)
+            sh2rgb = eval_sh(4, shs_view, dir_pp_normalized)
+            colors_precomp = torch.clamp_min(sh2rgb + 0.5, 0.0)
+        if not use_sh:
+            print("### Using SH coefficients for color")
+            colors_precomp = shs[i, :, 0, :]
+
         image, radii, depth, opacity, n_touched = rasterizer(
             means3D=gaussian_means[i],
             means2D=mean_gradients,
-            shs=shs[i] if use_sh else None,
-            colors_precomp=None if use_sh else shs[i, :, 0, :],
+            shs=None,
+            colors_precomp=colors_precomp,
             opacities=gaussian_opacities[i, ..., None],
             cov3D_precomp=gaussian_covariances[i, :, row, col],
             theta=cam_rot_delta[i] if cam_rot_delta is not None else None,
@@ -184,6 +196,7 @@ def render_cuda_orthographic(
     projection_matrix = rearrange(projection_matrix, "b i j -> b j i")
     view_matrix = rearrange(extrinsics.inverse(), "b i j -> b j i")
     full_projection = view_matrix @ projection_matrix
+    camera_center = extrinsics[:, :3, 3]
 
     all_images = []
     all_radii = []
@@ -214,11 +227,20 @@ def render_cuda_orthographic(
 
         row, col = torch.triu_indices(3, 3)
 
+        if use_sh:
+            shs_view = shs[i].mT
+            dir_pp = (gaussian_means[i] - camera_center[i].unsqueeze(0))
+            dir_pp_normalized = dir_pp/dir_pp.norm(dim=1, keepdim=True)
+            sh2rgb = eval_sh(4, shs_view, dir_pp_normalized)
+            colors_precomp = torch.clamp_min(sh2rgb + 0.5, 0.0)
+        else:
+            colors_precomp = shs[i, :, 0, :]
+
         image, radii, depth, opacity, n_touched = rasterizer(
             means3D=gaussian_means[i],
             means2D=mean_gradients,
-            shs=shs[i] if use_sh else None,
-            colors_precomp=None if use_sh else shs[i, :, 0, :],
+            shs=None,
+            colors_precomp=colors_precomp,
             opacities=gaussian_opacities[i, ..., None],
             cov3D_precomp=gaussian_covariances[i, :, row, col],
         )

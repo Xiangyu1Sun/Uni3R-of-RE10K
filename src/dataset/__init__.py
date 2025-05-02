@@ -8,11 +8,12 @@ from .dataset_re10k import DatasetRE10k, DatasetRE10kCfg, DatasetRE10kCfgWrapper
     DatasetScannetppCfgWrapper
 from .types import Stage
 from .view_sampler import get_view_sampler
+from .dataset_scannetpp import DatasetScanNetpp
 
 DATASETS: dict[str, Dataset] = {
     "re10k": DatasetRE10k,
     "dl3dv": DatasetRE10k,
-    "scannetpp": DatasetRE10k,
+    "scannetpp": DatasetScanNetpp,
     "scannet_pose": DatasetScannetPose,
 }
 

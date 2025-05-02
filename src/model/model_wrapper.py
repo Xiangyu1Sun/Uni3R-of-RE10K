@@ -561,10 +561,10 @@ class ModelWrapper(LightningModule):
         )
 
         # Draw cameras.
-        cameras = hcat(*render_cameras(batch, 256))
-        self.logger.log_image(
-            "cameras", [prep_image(add_border(cameras))], step=self.global_step
-        )
+        # cameras = hcat(*render_cameras(batch, 256))
+        # self.logger.log_image(
+        #     "cameras", [prep_image(add_border(cameras))], step=self.global_step
+        # )
 
         if self.encoder_visualizer is not None:
             for k, image in self.encoder_visualizer.visualize(
