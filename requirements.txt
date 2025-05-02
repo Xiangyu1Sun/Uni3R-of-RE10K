@@ -1,0 +1,19 @@
+lightning
+hydra-core
+jaxtyping
+beartype
+wandb
+einops
+colorama
+scikit-image
+colorspacious
+matplotlib
+moviepy==1.0.3
+# git+https://github.com/rmurai0610/diff-gaussian-rasterization-w-pose.git
+timm
+dacite
+lpips
+e3nn
+tabulate
+scikit-video
+opencv-python
