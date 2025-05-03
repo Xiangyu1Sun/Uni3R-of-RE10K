@@ -17,7 +17,17 @@ wandb.mode=offline \
 wandb.name=re10k 
 
 # Evaluation
-# RealEstate10K
+# RealEstate10K 2views
+CUDA_VISIBLE_DEVICES=3 python -m src.main \
++experiment=re10k \
+mode=test \
+wandb.name=re10k \
+wandb.mode=offline \
+dataset/view_sampler@dataset.re10k.view_sampler=evaluation \
+dataset.re10k.view_sampler.index_path=assets/evaluation_index_re10k.json \
+checkpointing.load=./pretrained_weights/vggtsplat_2views.pth \
+test.save_image=false
+# RealEstate10K 4views
 CUDA_VISIBLE_DEVICES=3 python -m src.main \
 +experiment=re10k_4view \
 mode=test \
@@ -26,6 +36,16 @@ wandb.mode=offline \
 dataset/view_sampler@dataset.re10k.view_sampler=evaluation \
 dataset.re10k.view_sampler.index_path=assets/evaluation_index_re10k_4v.json \
 checkpointing.load=./pretrained_weights/vggtsplat_4views.pth \
+test.save_image=false
+# RealEstate10K 8views
+CUDA_VISIBLE_DEVICES=3 python -m src.main \
++experiment=re10k_8view \
+mode=test \
+wandb.name=re10k \
+wandb.mode=offline \
+dataset/view_sampler@dataset.re10k.view_sampler=evaluation \
+dataset.re10k.view_sampler.index_path=assets/evaluation_index_re10k_8v.json \
+checkpointing.load=./pretrained_weights/vggtsplat_8views.pth \
 test.save_image=false
 
 # ACID
