@@ -49,12 +49,10 @@ class EncoderVggtSplatCfg:
     downscale_factor: int
     gaussian_adapter: GaussianAdapterCfg
     opacity_mapping: OpacityMappingCfg
-    # input_mean: tuple[float, float, float] = (0.5, 0.5, 0.5)
-    # input_std: tuple[float, float, float] = (0.5, 0.5, 0.5)
-    #### VGGT parameters
-    input_mean: tuple[float, float, float] = (0.485, 0.456, 0.406)
-    input_std: tuple[float, float, float] = (0.229, 0.224, 0.225)
+    input_mean: tuple[float, float, float] = (0.5, 0.5, 0.5)
+    input_std: tuple[float, float, float] = (0.5, 0.5, 0.5)
     pretrained_weights: str = ""
+    more_view_training: bool = False
     pose_free: bool = True
 
 def _init_weights(m):
@@ -269,32 +267,6 @@ class EncoderVggtSplat(Encoder[EncoderVggtSplatCfg]):
             ),
         )
 
-        # ret_gaussians = Gaussians(
-        #     rearrange(
-        #         gaussians.means,
-        #         "b v r srf spp xyz -> b (v r srf spp) xyz",
-        #     ),
-        #     rearrange(
-        #         gaussians.rotations,
-        #         "b v r srf spp wxyz -> b (v r srf spp) wxyz",
-        #     ),
-        #     rearrange(
-        #         gaussians.scales,
-        #         "b v r srf spp xyz -> b (v r srf spp) xyz",
-        #     ),
-        #     rearrange(
-        #         gaussians.harmonics,
-        #         "b v r srf spp c d_sh -> b (v r srf spp) c d_sh",
-        #     ).float(),
-        #     rearrange(
-        #         opacity_multiplier * gaussians.opacities,
-        #         "b v r srf spp -> b (v r srf spp)",
-        #     ).float(),
-        # )
-
-        # return ret_gaussians
-
-
     def get_data_shim(self) -> DataShim:
         def data_shim(batch: BatchedExample) -> BatchedExample:
             batch = apply_normalize_shim(
@@ -305,24 +277,6 @@ class EncoderVggtSplat(Encoder[EncoderVggtSplatCfg]):
 
             return batch
         return data_shim
-
-    # def get_data_shim(self) -> DataShim:
-    #     def data_shim(batch: BatchedExample) -> BatchedExample:
-    #         batch = apply_patch_shim(
-    #             batch,
-    #             self.cfg.patch_size * self.cfg.downscale_factor,
-    #             self.cfg.input_mean,
-    #             self.cfg.input_std,
-    #         )
-
-    #         # if self.cfg.apply_bounds_shim:
-    #         #     _, _, _, h, w = batch["context"]["image"].shape
-    #         #     near_disparity = self.cfg.near_disparity * min(h, w)
-    #         #     batch = apply_bounds_shim(batch, near_disparity, self.cfg.far_disparity)
-
-    #         return batch
-
-    #     return data_shim
 
     @property
     def sampler(self):

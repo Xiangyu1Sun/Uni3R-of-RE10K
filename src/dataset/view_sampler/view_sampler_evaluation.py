@@ -56,14 +56,6 @@ class ViewSamplerEvaluation(ViewSampler[ViewSamplerEvaluationCfg]):
         Int64[Tensor, " target_view"],  # indices for target views
         Float[Tensor, " overlap"],  # overlap
     ]:
-        def sample_support_indices(support_indices, max_samples=50):
-            num = support_indices.shape[0]
-            if num > max_samples:
-                # 生成 max_samples 个均匀间隔的整数索引
-                lin_indices = torch.linspace(0, num - 1, steps=max_samples).long()
-                support_indices = support_indices[lin_indices]
-            return support_indices
-
         entry = self.index.get(scene)
         if entry is None:
             raise ValueError(f"No indices available for scene {scene}.")
@@ -77,13 +69,6 @@ class ViewSamplerEvaluation(ViewSampler[ViewSamplerEvaluationCfg]):
         v = self.num_context_views
         if v > len(context_indices) and v == 3:
             context_indices = add_third_context_index(context_indices)
-
-        # support_indices = torch.arange(context_indices[0] + 1, context_indices[1])
-        # mask = ~torch.isin(support_indices, target_indices)
-        # support_indices = support_indices[mask]
-        # support_indices = sample_support_indices(support_indices, max_samples=50)
-
-        # import pdb; pdb.set_trace()
 
         return context_indices, target_indices, overlap
 

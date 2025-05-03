@@ -1,0 +1,46 @@
+# @package _global_
+
+defaults:
+  - /dataset@_group_.re10k: re10k_video
+  - override /model/encoder: vggt
+  - override /loss: [mse, lpips]
+
+wandb:
+  name: re10k_4view_8gpu
+  tags: [re10k, 256x256]
+
+model:
+  encoder:
+    gs_params_head_type: dpt_gs
+    pose_free: true
+    intrinsics_embed_loc: encoder
+    intrinsics_embed_type: token
+    pretrained_weights: ./pretrained_weights/vggtsplat_2views.pth
+    more_view_training: true
+  decoder:
+    make_scale_invariant: true
+
+dataset:
+  re10k:
+    view_sampler:
+      warm_up_steps: 10_000
+      num_context_views: 4
+      num_target_views: 6
+
+optimizer:
+  lr: 4e-5
+  warm_up_steps: 400
+  backbone_lr_multiplier: 0.25
+
+data_loader:
+  train:
+    batch_size: 4
+
+trainer:
+  max_steps: 40_000
+  val_check_interval: 1_000
+  gradient_clip_val: 0.5
+
+checkpointing:
+  every_n_train_steps: 10_000
+  save_weights_only: true

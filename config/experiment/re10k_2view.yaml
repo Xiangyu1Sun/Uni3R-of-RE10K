@@ -16,17 +16,18 @@ model:
     intrinsics_embed_loc: encoder
     intrinsics_embed_type: token
     pretrained_weights: './pretrained_weights/model.pt'
+    more_view_training: false
   decoder:
     make_scale_invariant: true
 
 dataset:
   re10k:
     view_sampler:
-      warm_up_steps: 15_000
+      warm_up_steps: 20_000
 
 optimizer:
   lr: 2e-4
-  warm_up_steps: 250
+  warm_up_steps: 400
   backbone_lr_multiplier: 0.1
 
 data_loader:
@@ -34,8 +35,10 @@ data_loader:
     batch_size: 8
 
 trainer:
-  max_steps: 40_000
-  val_check_interval: 500
+  max_steps: 60_000
+  val_check_interval: 1_000
+  gradient_clip_val: 0.5
 
 checkpointing:
   every_n_train_steps: 10_000
+  save_weights_only: true

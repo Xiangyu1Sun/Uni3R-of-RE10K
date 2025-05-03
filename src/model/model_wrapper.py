@@ -223,29 +223,26 @@ class ModelWrapper(LightningModule):
         if batch_idx % 100 == 0:
             print(f"Test step {batch_idx:0>6}.")
 
-        # # Render Gaussians.
-        # with self.benchmarker.time("encoder"):
-        #     gaussians = self.encoder(
-        #         batch["context"],
-        #         self.global_step,
-        #     )
+        # Render Gaussians.
+        with self.benchmarker.time("encoder"):
+            gaussians = self.encoder(
+                batch["context"],
+                self.global_step,
+            )
 
-        # # align the target pose
-        # if self.test_cfg.align_pose:
-        #     output = self.test_step_align(batch, gaussians)
-        # else:
-        #     with self.benchmarker.time("decoder", num_calls=v):
-        #         output = self.decoder.forward(
-        #             gaussians,
-        #             batch["target"]["extrinsics"],
-        #             batch["target"]["intrinsics"],
-        #             batch["target"]["near"],
-        #             batch["target"]["far"],
-        #             (h, w),
-        #         )
-
-        # new code: only align_pose version
-        output = self.test_step_align(batch, self.global_step)
+        # align the target pose
+        if self.test_cfg.align_pose:
+            output = self.test_step_align(batch, gaussians)
+        else:
+            with self.benchmarker.time("decoder", num_calls=v):
+                output = self.decoder.forward(
+                    gaussians,
+                    batch["target"]["extrinsics"],
+                    batch["target"]["intrinsics"],
+                    batch["target"]["near"],
+                    batch["target"]["far"],
+                    (h, w),
+                )
 
         # compute scores
         if self.test_cfg.compute_scores:
@@ -282,6 +279,7 @@ class ModelWrapper(LightningModule):
         if self.test_cfg.save_compare:
             # Construct comparison image.
             context_img = inverse_normalize(batch["context"]["image"][0])
+            # context_img = batch["context"]["image"][0]
             comparison = hcat(
                 add_label(vcat(*context_img), "Context"),
                 add_label(vcat(*rgb_gt), "Target (Ground Truth)"),
@@ -289,23 +287,11 @@ class ModelWrapper(LightningModule):
             )
             save_image(comparison, path / f"{scene}.png")
 
-    def test_step_align(self, batch, global_step):
+    def test_step_align(self, batch, gaussians):
         self.encoder.eval()
         # freeze all parameters
         for param in self.encoder.parameters():
             param.requires_grad = False
-
-        # # 只开放 TTT 的参数
-        # for param in self.encoder.point_head.parameters():
-        #     param.requires_grad = True
-        # for param in self.encoder.token_decoder.parameters():
-        #     param.requires_grad = True
-        # for param in self.encoder.aggregator.frame_ttt_layers.parameters():
-        #     param.requires_grad = True
-        # for param in self.encoder.aggregator.global_ttt_layers.parameters():
-        #     param.requires_grad = True
-        # self.encoder.aggregator.frame_alpha.requires_grad = True
-        # self.encoder.aggregator.global_alpha.requires_grad = True
 
         b, v, _, h, w = batch["target"]["image"].shape
         with torch.set_grad_enabled(True):
@@ -314,33 +300,6 @@ class ModelWrapper(LightningModule):
             cam_trans_delta = nn.Parameter(torch.zeros([b, v, 3], requires_grad=True, device=self.device))
 
             opt_params = []
-            # ttt_params = []
-
-            # # parameters optimization for ttt layers
-            # ttt_params.append(
-            #     {
-            #         "params": self.encoder.aggregator.frame_ttt_layers.parameters(), 
-            #         "lr": self.test_cfg.ttt_opt_lr,
-            #     }
-            # )
-            # ttt_params.append(
-            #     {
-            #         "params": self.encoder.aggregator.global_ttt_layers.parameters(), 
-            #         "lr": self.test_cfg.ttt_opt_lr,
-            #     }
-            # )
-            # ttt_params.append(
-            #     {
-            #         "params": self.encoder.aggregator.frame_alpha, 
-            #         "lr": self.test_cfg.ttt_opt_lr,
-            #     }
-            # )
-            # ttt_params.append(
-            #     {
-            #         "params": self.encoder.aggregator.global_alpha, 
-            #         "lr": self.test_cfg.ttt_opt_lr,
-            #     }
-            # )
 
             # parameters optimization for camera pose
             opt_params.append(
@@ -356,65 +315,13 @@ class ModelWrapper(LightningModule):
                 }
             )
             pose_optimizer = torch.optim.Adam(opt_params)
-            # ttt_optimizer = torch.optim.Adam(ttt_params)
 
             extrinsics = batch["target"]["extrinsics"].clone()
 
-            # for name, param in self.encoder.named_parameters():
-            #     if param.requires_grad:
-            #         if param.grad is None:
-            #             print(f"❌ No grad for {name}")
-            #         else:
-            #             print(f"✅ Grad exists for {name} with shape {param.grad.shape}")
-
             with self.benchmarker.time("optimize"):
-
-                # for i in range(self.test_cfg.ttt_steps):
-                #     ttt_optimizer.zero_grad()
-
-                #     gaussians = self.encoder(
-                #         batch["context"],
-                #         global_step,
-                #     )
-
-                #     # output = self.decoder.forward(
-                #     #     gaussians,
-                #     #     extrinsics,
-                #     #     batch["target"]["intrinsics"],
-                #     #     batch["target"]["near"],
-                #     #     batch["target"]["far"],
-                #     #     (h, w),
-                #     #     cam_rot_delta=cam_rot_delta,
-                #     #     cam_trans_delta=cam_trans_delta,
-                #     # )
-
-                #     output = self.decoder.forward(
-                #         gaussians,
-                #         batch["support"]["extrinsics"],
-                #         batch["support"]["intrinsics"],
-                #         batch["support"]["near"],
-                #         batch["support"]["far"],
-                #         (h, w),
-                #         # cam_rot_delta=cam_rot_delta,
-                #         # cam_trans_delta=cam_trans_delta,
-                #     )
-
-                #     # Compute and log loss.
-                #     total_loss = 0
-                #     for loss_fn in self.losses:
-                #         loss = loss_fn.forward(output, batch, gaussians, self.global_step, "support")
-                #         total_loss = total_loss + loss
-
-                #     total_loss.backward()
-                #     ttt_optimizer.step()
 
                 for i in range(self.test_cfg.pose_align_steps):
                     pose_optimizer.zero_grad()
-
-                    gaussians = self.encoder(
-                                batch["context"],
-                                global_step,
-                            )
 
                     output = self.decoder.forward(
                         gaussians,
@@ -514,6 +421,7 @@ class ModelWrapper(LightningModule):
 
         # Construct comparison image.
         context_img = inverse_normalize(batch["context"]["image"][0])
+        # context_img = batch["context"]["image"][0]
         context_img_depth = vis_depth_map(gaussian_means)
         context = []
         for i in range(context_img.shape[0]):

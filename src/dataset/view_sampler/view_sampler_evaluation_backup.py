@@ -85,7 +85,7 @@ class ViewSamplerEvaluation(ViewSampler[ViewSamplerEvaluationCfg]):
 
         # import pdb; pdb.set_trace()
 
-        return context_indices, target_indices, overlap #, support_indices
+        return context_indices, target_indices, overlap
 
     @property
     def num_context_views(self) -> int:

@@ -27,7 +27,7 @@ def apply_patch_shim_to_views(views: BatchedViews, patch_size: int) -> BatchedVi
         "intrinsics": intrinsics,
     }
 
-def normalize_image(tensor, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)):
+def normalize_image(tensor, mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)):
     mean = torch.as_tensor(mean, dtype=tensor.dtype, device=tensor.device).view(-1, 1, 1)
     std = torch.as_tensor(std, dtype=tensor.dtype, device=tensor.device).view(-1, 1, 1)
     return (tensor - mean) / std
@@ -35,8 +35,8 @@ def normalize_image(tensor, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225
 def apply_patch_shim(
     batch: BatchedExample, 
     patch_size: int, 
-    mean: tuple[float, float, float] = (0.485, 0.456, 0.406),
-    std: tuple[float, float, float] = (0.229, 0.224, 0.225),
+    mean: tuple[float, float, float] = (0.5, 0.5, 0.5),
+    std: tuple[float, float, float] = (0.5, 0.5, 0.5),
 ) -> BatchedExample:
     """Crop images in the batch so that their dimensions are cleanly divisible by the
     specified patch size.

@@ -9,8 +9,8 @@ from .view_sampler import ViewSampler
 
 
 @dataclass
-class ViewSamplerBoundedCfg:
-    name: Literal["bounded"]
+class ViewSamplerSequentialCfg:
+    name: Literal["sequential"]
     num_context_views: int
     num_target_views: int
     min_distance_between_context_views: int
@@ -19,9 +19,10 @@ class ViewSamplerBoundedCfg:
     warm_up_steps: int
     initial_min_distance_between_context_views: int
     initial_max_distance_between_context_views: int
+    p_inverse_order: float = 0.5
 
 
-class ViewSamplerBounded(ViewSampler[ViewSamplerBoundedCfg]):
+class ViewSamplerSequential(ViewSampler[ViewSamplerSequentialCfg]):
     def schedule(self, initial: int, final: int) -> int:
         fraction = self.global_step / self.cfg.warm_up_steps
         return min(initial + int((final - initial) * fraction), final)
@@ -38,6 +39,7 @@ class ViewSamplerBounded(ViewSampler[ViewSamplerBoundedCfg]):
         Float[Tensor, " overlap"],  # overlap
     ]:
         num_views, _, _ = extrinsics.shape
+        num_context_views = self.cfg.num_context_views
 
         # Compute the context view spacing based on the current global step.
         if self.stage == "test":
@@ -59,8 +61,9 @@ class ViewSamplerBounded(ViewSampler[ViewSamplerBoundedCfg]):
 
         # Pick the gap between the context views.
         if not self.cameras_are_circular:
-            max_gap = min(num_views - 1, max_gap)
-        min_gap = max(2 * self.cfg.min_distance_to_context_views, min_gap)
+            max_gap = min(num_views // num_context_views, max_gap)
+        # min_gap = max(2 * self.cfg.min_distance_to_context_views, min_gap)
+        max_gap = min((num_views - 1) // (num_context_views - 1), max_gap)
         if max_gap < min_gap:
             raise ValueError("Example does not have enough frames!")
         context_gap = torch.randint(
@@ -72,18 +75,18 @@ class ViewSamplerBounded(ViewSampler[ViewSamplerBoundedCfg]):
 
         # Pick the left and right context indices.
         index_context_left = torch.randint(
-            num_views if self.cameras_are_circular else num_views - context_gap * (self.cfg.num_context_views - 1),
+            num_views if self.cameras_are_circular else num_views - context_gap * (num_context_views - 1),
             size=tuple(),
             device=device,
         ).item()
         if self.stage == "test":
             index_context_left = index_context_left * 0
-        index_context_right = index_context_left + context_gap * (self.cfg.num_context_views - 1)
+        index_context_right = index_context_left + context_gap * (num_context_views - 1)
 
         if self.is_overfitting:
             index_context_left *= 0
             index_context_right *= 0
-            index_context_right += max_gap * (self.cfg.num_context_views - 1)
+            index_context_right += max_gap * (num_context_views - 1)
             context_gap = max_gap
 
         # Pick the target view indices.
@@ -104,6 +107,8 @@ class ViewSamplerBounded(ViewSampler[ViewSamplerBoundedCfg]):
                 size=(self.cfg.num_target_views,),
                 device=device,
             )
+            
+        # index_target, _ = torch.sort(index_target)
 
         # Apply modulo for circular datasets.
         if self.cameras_are_circular:
@@ -120,9 +125,12 @@ class ViewSamplerBounded(ViewSampler[ViewSamplerBoundedCfg]):
         else:
             extra_views = []
 
-        index_context = torch.tensor((index_context_left, *extra_views, index_context_right))
-
         overlap = torch.tensor([0.5], dtype=torch.float32, device=device)  # dummy
+
+        index_context = torch.tensor((index_context_left, *extra_views, index_context_right))
+        if self.stage == "train" and self.cfg.p_inverse_order > 0:
+            if torch.rand(tuple()) < self.cfg.p_inverse_order:
+                index_context = index_context[::-1]
 
         return (
             index_context,
