@@ -29,7 +29,7 @@ class EvaluationIndexGeneratorCfg:
 
 @dataclass
 class IndexEntry:
-    context: tuple[int, int]
+    context: tuple[int, ...]
     target: tuple[int, ...]
     overlap: Optional[str | float] = None  # choose from ["small", "medium", "large"] or a float number indicates the overlap ratio
 

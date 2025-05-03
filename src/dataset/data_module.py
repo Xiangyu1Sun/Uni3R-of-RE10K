@@ -21,6 +21,7 @@ def get_data_shim(encoder: nn.Module) -> DataShim:
     """
 
     shims: list[DataShim] = []
+    # import pdb; pdb.set_trace()
     if hasattr(encoder, "get_data_shim"):
         shims.append(encoder.get_data_shim())
 

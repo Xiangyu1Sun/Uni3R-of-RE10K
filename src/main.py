@@ -121,39 +121,6 @@ def train(cfg_dict: DictConfig):
         distiller = get_distiller(cfg.train.distiller)
         distiller = distiller.eval()
 
-    # Load the encoder weights.
-    if cfg.model.encoder.pretrained_weights and cfg.mode == "train":
-        print('loading pre_trained weights!\n')
-        weight_path = cfg.model.encoder.pretrained_weights
-        ckpt_weights = torch.load(weight_path, map_location='cpu')
-        state_dict = ckpt_weights.get('state_dict', ckpt_weights)
-        # with open("params_encoder.txt", "w") as f:
-        #     for name, param in encoder.named_parameters():
-        #         f.write(f"{name}: {param.shape}\n")
-        ckpt_weights = checkpoint_filter_fn(state_dict, encoder)
-        # with open("params_after_ckpt.txt", "w") as f:
-        #     for name, param in ckpt_weights.items():
-        #         f.write(f"{name}: {param.shape}\n")
-
-        missing_keys, unexpected_keys = encoder.load_state_dict(ckpt_weights, strict=False)
-
-        # if 'model' in ckpt_weights:
-        #     ckpt_weights = ckpt_weights['model']
-        #     # with open("params_ckpt.txt", "w") as f:
-        #     #     for name, param in ckpt_weights.items():
-        #     #         f.write(f"{name}: {param.shape}\n")
-        #     ckpt_weights = checkpoint_filter_fn(ckpt_weights, encoder)
-        #     # with open("params_after_ckpt.txt", "w") as f:
-        #     #     for name, param in ckpt_weights.items():
-        #     #         f.write(f"{name}: {param.shape}\n")
-        #     missing_keys, unexpected_keys = encoder.load_state_dict(ckpt_weights, strict=False)
-        # elif 'state_dict' in ckpt_weights:
-        #     ckpt_weights = ckpt_weights['state_dict']
-        #     ckpt_weights = {k[8:]: v for k, v in ckpt_weights.items() if k.startswith('encoder.')}
-        #     missing_keys, unexpected_keys = encoder.load_state_dict(ckpt_weights, strict=False)
-        # else:
-        #     raise ValueError(f"Invalid checkpoint format: {weight_path}")
-
     model_wrapper = ModelWrapper(
         cfg.optimizer,
         cfg.test,
@@ -165,6 +132,28 @@ def train(cfg_dict: DictConfig):
         step_tracker,
         distiller=distiller,
     )
+
+    # Load the encoder weights.
+    if cfg.model.encoder.pretrained_weights and cfg.mode == "train":
+        if cfg.model.encoder.more_view_training:
+            print('loading pre_trained 2 or 4 views weights!\n')
+            weight_path = cfg.model.encoder.pretrained_weights
+            ckpt_weights = torch.load(weight_path, map_location='cpu')
+            model_wrapper.load_state_dict(ckpt_weights)
+        else:
+            print('loading pre_trained VGGT weights!\n')
+            weight_path = cfg.model.encoder.pretrained_weights
+            ckpt_weights = torch.load(weight_path, map_location='cpu')
+            state_dict = ckpt_weights.get('state_dict', ckpt_weights)
+            # with open("params_encoder.txt", "w") as f:
+            #     for name, param in encoder.named_parameters():
+            #         f.write(f"{name}: {param.shape}\n")
+            ckpt_weights = checkpoint_filter_fn(state_dict, encoder)
+            # with open("params_after_ckpt.txt", "w") as f:
+            #     for name, param in ckpt_weights.items():
+            #         f.write(f"{name}: {param.shape}\n")
+            missing_keys, unexpected_keys = encoder.load_state_dict(ckpt_weights, strict=False)
+
     data_module = DataModule(
         cfg.dataset,
         cfg.data_loader,
@@ -175,14 +164,9 @@ def train(cfg_dict: DictConfig):
     if cfg.mode == "train":
         trainer.fit(model_wrapper, datamodule=data_module, ckpt_path=checkpoint_path)
     else:
-        ##### We are adding ttt layer here and also initialize the ttt-layer, fighting!
-        checkpoint_path = Path('./pretrained_weights/epoch_2-step_300000.ckpt')
+        checkpoint_path = Path(cfg.checkpointing.load)
         checkpoint = torch.load(checkpoint_path)
-        # with open("params_encoder.txt", "w") as f:
-        #     for name, param in checkpoint["state_dict"].items():
-        #         f.write(f"{name}: {param.shape}\n")
-        # import pdb; pdb.set_trace()
-        missing, unexpected = model_wrapper.load_state_dict(checkpoint["state_dict"], strict=False)
+        model_wrapper.load_state_dict(checkpoint, strict=False)
 
         trainer.test(
             model_wrapper,

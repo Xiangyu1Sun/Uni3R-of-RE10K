@@ -72,18 +72,19 @@ class ViewSamplerBounded(ViewSampler[ViewSamplerBoundedCfg]):
 
         # Pick the left and right context indices.
         index_context_left = torch.randint(
-            num_views if self.cameras_are_circular else num_views - context_gap,
+            num_views if self.cameras_are_circular else num_views - context_gap * (self.cfg.num_context_views - 1),
             size=tuple(),
             device=device,
         ).item()
         if self.stage == "test":
             index_context_left = index_context_left * 0
-        index_context_right = index_context_left + context_gap
+        index_context_right = index_context_left + context_gap * (self.cfg.num_context_views - 1)
 
         if self.is_overfitting:
             index_context_left *= 0
             index_context_right *= 0
-            index_context_right += max_gap
+            index_context_right += max_gap * (self.cfg.num_context_views - 1)
+            context_gap = max_gap
 
         # Pick the target view indices.
         if self.stage == "test":
@@ -95,9 +96,11 @@ class ViewSamplerBounded(ViewSampler[ViewSamplerBoundedCfg]):
             )
         else:
             # When training or validating (visualizing), pick at random.
+            index_target_left = max(0, index_context_left - self.cfg.min_distance_to_context_views)
+            index_target_right = min(num_views - 1, index_context_right + self.cfg.min_distance_to_context_views)
             index_target = torch.randint(
-                index_context_left + self.cfg.min_distance_to_context_views,
-                index_context_right + 1 - self.cfg.min_distance_to_context_views,
+                index_target_left,
+                index_target_right + 1,
                 size=(self.cfg.num_target_views,),
                 device=device,
             )
@@ -111,20 +114,18 @@ class ViewSamplerBounded(ViewSampler[ViewSamplerBoundedCfg]):
         # the left and right ones.
         if self.cfg.num_context_views > 2:
             num_extra_views = self.cfg.num_context_views - 2
-            extra_views = []
-            while len(set(extra_views)) != num_extra_views:
-                extra_views = torch.randint(
-                    index_context_left + 1,
-                    index_context_right,
-                    (num_extra_views,),
-                ).tolist()
+            extra_views = torch.arange(
+                index_context_left, index_context_right, step=context_gap
+            )[1:].tolist()
         else:
             extra_views = []
+
+        index_context = torch.tensor((index_context_left, *extra_views, index_context_right))
 
         overlap = torch.tensor([0.5], dtype=torch.float32, device=device)  # dummy
 
         return (
-            torch.tensor((index_context_left, *extra_views, index_context_right)),
+            index_context,
             index_target,
             overlap
         )
