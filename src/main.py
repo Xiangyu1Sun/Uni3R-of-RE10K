@@ -166,7 +166,7 @@ def train(cfg_dict: DictConfig):
     else:
         checkpoint_path = Path(cfg.checkpointing.load)
         checkpoint = torch.load(checkpoint_path)
-        model_wrapper.load_state_dict(checkpoint, strict=False)
+        model_wrapper.load_state_dict(checkpoint['state_dict'], strict=True)
 
         trainer.test(
             model_wrapper,
