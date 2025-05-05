@@ -138,7 +138,7 @@ def train(cfg_dict: DictConfig):
         if cfg.model.encoder.more_view_training:
             print('loading pre_trained 2 or 4 views weights!\n')
             weight_path = cfg.model.encoder.pretrained_weights
-            ckpt_weights = torch.load(weight_path, map_location='cpu')
+            ckpt_weights = torch.load(weight_path, map_location='cpu')['state_dict']
             model_wrapper.load_state_dict(ckpt_weights)
         else:
             print('loading pre_trained VGGT weights!\n')

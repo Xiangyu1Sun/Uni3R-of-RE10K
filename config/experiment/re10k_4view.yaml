@@ -15,7 +15,7 @@ model:
     pose_free: true
     intrinsics_embed_loc: encoder
     intrinsics_embed_type: token
-    pretrained_weights: ./pretrained_weights/vggtsplat_2views.pth
+    pretrained_weights: ./pretrained_weights/vggtsplat_2views.ckpt
     more_view_training: true
   decoder:
     make_scale_invariant: true
