@@ -22,7 +22,7 @@ class LSegFeatureExtractor(LSegNet):
         # layer:(b, 1024, h//16, w//16)
         # image_features = torch.cat([layer_1, layer_2, layer_3, layer_4], dim=1)
         # # image_features:(b, 4096, h//16, w//16)
-        
+
         # dense feature
         # DPT head
         pretrained = self.pretrained
@@ -30,7 +30,7 @@ class LSegFeatureExtractor(LSegNet):
         layer_2 = pretrained.act_postprocess2[3 : len(pretrained.act_postprocess2)](layer_2)
         layer_3 = pretrained.act_postprocess3[3 : len(pretrained.act_postprocess3)](layer_3)
         layer_4 = pretrained.act_postprocess4[3 : len(pretrained.act_postprocess4)](layer_4)
-        
+
         # refinenet
         layer_1_rn = self.scratch.layer1_rn(layer_1)
         layer_2_rn = self.scratch.layer2_rn(layer_2)

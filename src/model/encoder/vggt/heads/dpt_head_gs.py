@@ -53,7 +53,7 @@ class DPTHeadGS(nn.Module):
         pos_embed: bool = True,
         feature_only: bool = False,
         down_ratio: int = 1,
-        input_merger_dim=3,
+        input_merger_args=(3, 128, 7, 1, 3),
     ) -> None:
         super(DPTHeadGS, self).__init__()
         self.patch_size = patch_size
@@ -142,7 +142,7 @@ class DPTHeadGS(nn.Module):
         self.input_merger = nn.Sequential(
             # nn.Conv2d(256+3+3+1, 256, kernel_size=3, padding=1),
             # nn.Conv2d(3+6, 256, 7, 1, 3),
-            nn.Conv2d(input_merger_dim, 128, 7, 1, 3),
+            nn.Conv2d(*input_merger_args),
             nn.ReLU(),
         )
 
