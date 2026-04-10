@@ -1,14 +1,28 @@
-# NoPoVggtSplat
+# Self Implementation of RE10K datasets training and cross-domain datasets evaluation of Uni3R
 
-先下载vggt的pretrained weights，然后存储到./pretrained_weights/model.pt
+The model is trained only on RE10K datasets and then do in-domian and cross-domain datasets evaluation.
 
-该版本目前仅在re10k下训练也仅在re10k测试, 参考command.sh文件
+Downloading vggt model checkpoint from https://github.com/facebookresearch/vggt. 
+Then put the pretrained vggt model under the category of ./pretrained_weights/model.pt
 
-推荐，先多用几组8gpus训练2views，然后测试2views的性能，挑一个性能好的进行4views和8views的训练，
-该流程完全follow vicasplat的流程。
-训练时候注意保持 total batchsize * iters 和 vicasplat 完全一致，公平对比。
+# Training details
 
-我认为需要试的参数，optimizer中的lr和backbone_lr_multiplie
-以及view_sampler的warm up steps，可能值小一点会更早开始训练大view range，效果会好点
+Please follow the Vicasplat training, 2views -> 4views -> 8views. (https://github.com/WU-CVGL/VicaSplat)
 
-后续，得到2，4，8views在re10k上训练的ckpts之后，可以在scannet上做一下zero shot generalization的测试，参考vicasplat的步骤（论文中的Tab.2）。
+# Training on re10k
+CUDA_VISIBLE_DEVICES=0,1,2,3 python -m src.main \
++experiment=re10k_2view \
+wandb.mode=online \
+wandb.name=re10k
+
+# Train on 2 views first and then train on 4 views
+CUDA_VISIBLE_DEVICES=3 python -m src.main \
++experiment=re10k_4view \
+wandb.mode=offline \
+wandb.name=re10k 
+
+# Train on 4 views first and then train on 8 views
+CUDA_VISIBLE_DEVICES=3 python -m src.main \
++experiment=re10k_8view \
+wandb.mode=offline \
+wandb.name=re10k 
