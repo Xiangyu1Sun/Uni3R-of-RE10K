@@ -1,6 +1,6 @@
 # Self Implementation of Uni3R on RE10K datasets
 
-Self Implementation of RE10K datasets training and cross-domain datasets evaluation of Uni3R paper. (https://github.com/HorizonRobotics/Uni3R)
+Self Implementation of RE10K datasets training and cross-domain datasets evaluation of Uni3R paper[(https://github.com/HorizonRobotics/Uni3R)].
 
 This is the not the official code.
 
@@ -10,9 +10,9 @@ The model is trained only on RE10K datasets and then do in-domian and cross-doma
 
 ## Dataset processing
 
-For re10k dataset, please download from Pixelsplat. (https://github.com/dcharatan/pixelsplat)
+For re10k dataset, please download from [Pixelsplat](https://github.com/dcharatan/pixelsplat).
 
-And for scannet++ dataset, please follow Vicasplat. (https://github.com/WU-CVGL/VicaSplat)
+And for scannet++ dataset, please follow [Vicasplat](https://github.com/WU-CVGL/VicaSplat).
 
 ## More training and evaluation details
 
