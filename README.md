@@ -1,10 +1,8 @@
 # Self Implementation of Uni3R on RE10K datasets
 
-Self Implementation of RE10K datasets training and cross-domain datasets evaluation of Uni3R paper[(https://github.com/HorizonRobotics/Uni3R)].
+Self Implementation of RE10K datasets training and cross-domain datasets evaluation of [Uni3R](https://github.com/HorizonRobotics/Uni3R).
 
-This is the not the official code.
-
-The model is trained only on RE10K datasets and then do in-domian and cross-domain datasets evaluation.
+This is the not the official code. The model is trained only on RE10K datasets and then do in-domian and cross-domain datasets evaluation.
 
 
 
@@ -16,7 +14,7 @@ And for scannet++ dataset, please follow [Vicasplat](https://github.com/WU-CVGL/
 
 ## More training and evaluation details
 
-First, download the vggt model checkpoint from https://github.com/facebookresearch/vggt. 
+First, download the vggt model [checkpoint](https://github.com/facebookresearch/vggt). 
 Then put the pretrained vggt model under the category of ./pretrained_weights/model.pt
 
 please follow our command.sh file
