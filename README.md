@@ -1,4 +1,4 @@
-# Self Implementation of Uni3R
+# Self Implementation of Uni3R on RE10K datasets
 
 Self Implementation of RE10K datasets training and cross-domain datasets evaluation of Uni3R paper. (https://github.com/HorizonRobotics/Uni3R)
 
