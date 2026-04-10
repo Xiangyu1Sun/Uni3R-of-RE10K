@@ -15,7 +15,7 @@ And for scannet++ dataset, please follow [Vicasplat](https://github.com/WU-CVGL/
 ## More training and evaluation details
 
 First, download the vggt model [checkpoint](https://github.com/facebookresearch/vggt). 
-Then put the pretrained vggt model under the category of ./pretrained_weights/model.pt
+Then put the pretrained vggt model under the category of ./pretrained_weights/model.pt.
 
 please follow our command.sh file
 
