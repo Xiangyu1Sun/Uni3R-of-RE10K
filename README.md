@@ -6,8 +6,7 @@ This is the not the official code.
 
 The model is trained only on RE10K datasets and then do in-domian and cross-domain datasets evaluation.
 
-Downloading vggt model checkpoint from https://github.com/facebookresearch/vggt. 
-Then put the pretrained vggt model under the category of ./pretrained_weights/model.pt
+
 
 ## Dataset processing
 
@@ -16,6 +15,9 @@ For re10k dataset, please download from Pixelsplat. (https://github.com/dcharata
 And for scannet++ dataset, please follow Vicasplat. (https://github.com/WU-CVGL/VicaSplat)
 
 ## More training and evaluation details
+
+First, download the vggt model checkpoint from https://github.com/facebookresearch/vggt. 
+Then put the pretrained vggt model under the category of ./pretrained_weights/model.pt
 
 please follow our command.sh file
 
