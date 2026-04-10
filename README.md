@@ -39,6 +39,8 @@ wandb.mode=offline \
 wandb.name=re10k 
 ````
 
+Our pretrained model [checkpoint](https://huggingface.co/Xiang12yu/uni3r_re10k). (2,4 and 8 views)
+
 ````
 # Evaluation
 # RealEstate10K 2views
